@@ -3,7 +3,7 @@ import { DELETE_TASK } from '../../../routes/api-routes';
 
 export async function deleteTaskApi(id) {
     try {
-        const url = DELETE_TASK.replace(':id', id);
+        const url = DELETE_TASK(id);
         const res = await axios.delete(url);
         return res.data;
     } catch (err) {

@@ -3,7 +3,7 @@ import { UPDATE_TASK, UPDATE_TASK_STATUS } from '../../../routes/api-routes';
 
 export async function updateTaskApi(id, taskData) {
     try {
-        const url = UPDATE_TASK.replace(':id', id);
+        const url = UPDATE_TASK(id);
         const res = await axios.put(url, taskData);
         return res.data;
     } catch (err) {
@@ -17,7 +17,7 @@ export async function updateTaskApi(id, taskData) {
 
 export async function updateTaskStatusApi(id, status) {
     try {
-        const url = UPDATE_TASK_STATUS.replace(':id', id);
+        const url = UPDATE_TASK_STATUS(id);
         const res = await axios.patch(url, { status });
         return res.data;
     } catch (err) {
