@@ -1,128 +1,43 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUpDown, MoreHorizontal, Plus, Square, CheckSquare, Trash2, List, Kanban, Inbox, Clock, Send, ChevronDown } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Plus, Square, CheckSquare, Trash2, List, Kanban, Inbox, Clock, Send, ChevronDown, Menu } from 'lucide-react';
 import { useDashboardStore } from '../../store/useDashboardStore';
+import { useTaskActions } from '../../hooks/useTaskActions';
 import { SidebarEnum } from '../../constants/DashboardEnum';
 import DeleteConfirmDialog from '../ui/DeleteConfirmDialog';
-
-// Helper Sub-component for individual task list row
-function TaskListItemRow({ task, toggleTaskStatus, onDeleteClick }) {
-  const id = task._id || task.id;
-  return (
-    <div 
-      className="group flex items-center justify-between bg-[#242424]/30 hover:bg-[#242424]/60 border border-zinc-800/30 rounded-xl px-4 py-3.5 transition-colors"
-    >
-      <div className="flex items-center gap-3.5 flex-1 min-w-0 mr-4">
-        <button 
-          onClick={() => toggleTaskStatus(id)}
-          className="text-zinc-500 hover:text-blue-500 cursor-pointer shrink-0 transition-colors"
-        >
-          {task.status === 'completed' ? (
-            <CheckSquare size={19} className="text-blue-500" />
-          ) : (
-            <Square size={19} />
-          )}
-        </button>
-        <span className={`text-[14.5px] truncate ${
-          task.status === 'completed' ? 'line-through text-zinc-600' : 'text-zinc-200'
-        }`}>
-          {task.title}
-        </span>
-      </div>
-      
-      <div className="flex items-center gap-3 shrink-0">
-        {/* Priority & Status Badges */}
-        <div className="hidden sm:flex items-center gap-2">
-          {task.priority && (
-            <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider border ${
-              task.priority.toLowerCase() === 'high' 
-                ? 'bg-rose-950/20 text-rose-400 border-rose-900/30' 
-                : task.priority.toLowerCase() === 'medium'
-                ? 'bg-amber-950/20 text-amber-400 border-amber-900/30'
-                : 'bg-zinc-800 text-zinc-400 border-zinc-700/40'
-            }`}>
-              {task.priority}
-            </span>
-          )}
-          {task.status && (
-            <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider border ${
-              task.status.toLowerCase() === 'completed' 
-                ? 'bg-emerald-950/20 text-emerald-400 border-emerald-900/30' 
-                : task.status.toLowerCase() === 'in-progress'
-                ? 'bg-blue-950/20 text-blue-400 border-blue-900/30'
-                : 'bg-zinc-800 text-zinc-400 border-zinc-700/40'
-            }`}>
-              {task.status}
-            </span>
-          )}
-        </div>
-
-        {/* Delete button (shows on hover) */}
-        <button 
-          onClick={() => onDeleteClick(task)}
-          className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-rose-400 p-1.5 rounded-lg hover:bg-zinc-800/60 cursor-pointer transition-all duration-150 shrink-0"
-        >
-          <Trash2 size={15} />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// Custom Clipboard SVG Empty State Illustration
-function EmptyIllustration() {
-  return (
-    <svg viewBox="0 0 200 130" width="160" height="130" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path 
-        d="M40,65 C35,30 70,20 110,25 C150,30 170,40 165,75 C160,110 125,120 90,115 C55,110 45,100 40,65 Z" 
-        fill="#252525" 
-        opacity="0.6"
-      />
-      <circle cx="100" cy="65" r="50" stroke="#333" strokeWidth="1" strokeDasharray="3 3" />
-      <rect x="78" y="25" width="44" height="60" rx="3" fill="#e4e4e7" />
-      <rect x="91" y="19" width="18" height="8" rx="2" fill="#71717a" />
-      <rect x="86" y="38" width="6" height="6" rx="1" fill="none" stroke="#3b82f6" strokeWidth="1.5" />
-      <line x1="97" y1="41" x2="114" y2="41" stroke="#d4d4d8" strokeWidth="2.2" strokeLinecap="round" />
-      <rect x="86" y="52" width="6" height="6" rx="1" fill="none" stroke="#3b82f6" strokeWidth="1.5" />
-      <line x1="97" y1="55" x2="110" y2="55" stroke="#d4d4d8" strokeWidth="2.2" strokeLinecap="round" />
-      <g transform="rotate(15 130 60)">
-        <rect x="125" y="40" width="6" height="40" rx="1" fill="#3b82f6" />
-        <path d="M125,40 L128,35 L131,40 Z" fill="#eab308" />
-        <rect x="125" y="76" width="6" height="4" fill="#f43f5e" />
-      </g>
-    </svg>
-  );
-}
-
-// Custom 3-Line List Icon
-function ListMenuIcon({ className }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <line x1="4" y1="6" x2="20" y2="6" />
-      <line x1="4" y1="12" x2="20" y2="12" />
-      <line x1="4" y1="18" x2="20" y2="18" />
-    </svg>
-  );
-}
+import TaskListItemRow from '../ui/TaskListItemRow';
+import EmptyIllustration from '../ui/EmptyIllustration';
+import TaskRowSkeleton from '../ui/TaskRowSkeleton';
+import ListMenuIcon from '../ui/ListMenuIcon';
 
 export default function MiddleContentBar() {
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // ── UI state from store ──
   const { 
     activeFilter,
     lists, 
     tasks, 
     listSections, 
-    addTask, 
-    toggleTaskStatus, 
-    deleteTask, 
-    updateTaskSection, 
     addSection, 
     setListViewType,
     deleteList,
     sortBy,
     setSortBy,
-    fetchTasks
+    loading,
+    searchQuery,
+    setSidebarOpen,
+    setActiveFilter,
+    setActiveTab
   } = useDashboardStore();
+
+  // ── CRUD operations from hook ──
+  const { fetchTasks, addTask, toggleTaskStatus, deleteTask, updateTaskSection } = useTaskActions();
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
@@ -161,10 +76,21 @@ export default function MiddleContentBar() {
     }
   }
 
-  // Fetch tasks on initial mount
+  // Sync tab and filter state from URL parameters on initial client mount to avoid hydration mismatch
   useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    const filter = params.get('filter');
+    if (tab) setActiveTab(tab);
+    if (filter) setActiveFilter(filter);
+  }, [setActiveFilter, setActiveTab]);
+
+  // Fetch tasks on mount and whenever filter, sort, or search changes
+  useEffect(() => {
+    if (mounted) {
+      fetchTasks();
+    }
+  }, [fetchTasks, activeFilter, sortBy, searchQuery, mounted]);
 
   // Close dropdowns on click outside
   useEffect(() => {
@@ -186,6 +112,12 @@ export default function MiddleContentBar() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  if (!mounted) {
+    return (
+      <div className="flex-1 bg-[#1C1C1C] h-screen" />
+    );
+  }
 
   // Resolve current active list details
   const isCustomList = activeFilter.startsWith('list_');
@@ -313,6 +245,15 @@ export default function MiddleContentBar() {
   return (
     <div className="flex-1 bg-[#1C1C1C] flex flex-col h-screen overflow-hidden text-zinc-300 relative select-none">
       
+      {/* Mobile Hamburger Button */}
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className="fixed top-4 left-4 z-50 md:hidden w-10 h-10 rounded-xl bg-[#242424] border border-zinc-800 flex items-center justify-center text-zinc-300 hover:text-white hover:bg-zinc-700 transition-colors cursor-pointer shadow-lg"
+        aria-label="Open sidebar"
+      >
+        <Menu size={20} />
+      </button>
+
       {/* 1. Header Bar */}
       <header className="flex items-center justify-between px-4 md:px-8 py-5 border-b border-zinc-800/60 shrink-0">
         <div className="flex items-center gap-3 pl-10 md:pl-0">
@@ -606,7 +547,13 @@ export default function MiddleContentBar() {
           </div>
         )}
 
-        {filteredTasks.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col gap-1.5">
+            <TaskRowSkeleton />
+            <TaskRowSkeleton />
+            <TaskRowSkeleton />
+          </div>
+        ) : filteredTasks.length === 0 ? (
           /* Empty state illustration */
           <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 py-20 select-none">
             <EmptyIllustration />
