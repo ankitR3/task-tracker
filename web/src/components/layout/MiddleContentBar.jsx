@@ -6,6 +6,7 @@ import { useDashboardStore } from '../../store/useDashboardStore';
 import { useTaskActions } from '../../hooks/useTaskActions';
 import { SidebarEnum } from '../../constants/DashboardEnum';
 import DeleteConfirmDialog from '../ui/DeleteConfirmDialog';
+import SearchDialog from '../ui/SearchDialog';
 import TaskListItemRow from '../ui/TaskListItemRow';
 import EmptyIllustration from '../ui/EmptyIllustration';
 import TaskRowSkeleton from '../ui/TaskRowSkeleton';
@@ -738,6 +739,9 @@ export default function MiddleContentBar() {
         title={`Delete task "${taskToDeleteTitle}"?`}
         description="This task will be permanently deleted."
       />
+
+      {/* Search Overlay Dialog Modal */}
+      <SearchDialog />
 
     </div>
   );

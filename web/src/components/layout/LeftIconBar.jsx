@@ -4,7 +4,6 @@ import React from 'react';
 import { SquareCheck, Search, User } from 'lucide-react';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { DashboardEnum } from '../../constants/DashboardEnum';
-import SearchDialog from '../ui/SearchDialog';
 
 export default function LeftIconBar() {
   const [mounted, setMounted] = React.useState(false);
@@ -73,9 +72,6 @@ export default function LeftIconBar() {
         >
           <Search size={22} strokeWidth={2.2} />
         </button>
-
-        {/* Search Overlay Dialog Modal */}
-        <SearchDialog />
 
       </div>
     </div>
